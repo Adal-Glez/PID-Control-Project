@@ -4,8 +4,11 @@
 #include "PID.h"
 #include <math.h>
 
+#include <vector>
+
 // for convenience
 using json = nlohmann::json;
+using namespace std;
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
@@ -28,13 +31,27 @@ std::string hasData(std::string s) {
   return "";
 }
 
+
+
 int main()
 {
   uWS::Hub h;
 
   PID pid;
   // TODO: Initialize the pid variable.
-
+  pid.Init(0.15,  0.,   1.5);  //** steady turns
+    
+  //pid.Init(0.159,  0.   ,  1.399);  //** steady turns
+  //pid.Init(0.15 ,  0.001,  1.0  );  //**************
+  //pid.Init(0.225,  0.001, 14.842);    //slow but steady
+  //pid.Init(0.225,  0.001,  7.842);
+  //pid.Init(0.225,  0.001,  1.842);
+  
+  // Reject **
+  // pid.Init(1.  , 0.   , 1.28); // oscilation increases over time
+  // pid.Init(0.01, 0.001, 1.  ); // wide steering touching lane
+  
+  
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -57,7 +74,13 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-          
+          //double required_speed = 60.0;
+          pid.UpdateError(cte);
+          steer_value = pid.TotalError();
+            
+          if (steer_value > 1.0) { steer_value = 1.0; }
+          else if (steer_value < - 1.0) { steer_value = -1.0; }
+
           // DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
